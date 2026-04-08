@@ -4,10 +4,10 @@ const { getProductos,
         getProductosPorCategoria,
         getProductosPorId } = require('../controllers/products.controller');
 
-router.get('/productos', getProductos);
+router.get('/', getProductos);
 
-router.get('/productos/categoria/:id', getProductosPorCategoria);
+router.get('/categoria/:id', getProductosPorCategoria);
 
-router.get('/productos/:id', getProductosPorId);
+router.get('/:id', getProductosPorId);
 
 module.exports = router;

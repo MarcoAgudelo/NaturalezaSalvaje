@@ -1,19 +1,22 @@
 const express = require('express');
 const cors = require('cors');
+const productosRoutes = require('./routes/products.routes');
+const categoriasRoutes = require('./routes/categories.routes');
+const authRoutes = require('./routes/auth.routes');
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
-const productosRoutes = require('./routes/products.routes');
-app.use('/api', productosRoutes);
-
-const categoriasRoutes = require('./routes/categories.routes');
-app.use('/api', categoriasRoutes);
-
-app.get('/api/test', (req, res) => {
-  res.json({ message: 'API funcionando 🔥' });
+app.get('/', (req, res) => {
+  res.send({ message: 'API funcionando 🔥' });
 });
+
+
+app.use('/productos', productosRoutes);
+app.use('/categorias', categoriasRoutes);
+app.use('/auth', authRoutes);
+
 
 module.exports = app;
