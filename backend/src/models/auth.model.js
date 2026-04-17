@@ -50,9 +50,22 @@ const crearUsuariosPorGoogleId = async ({nombres, apellidos, email, google_id}) 
     return result.rows[0];
 };
 
+const obtenerUsuarioPorId = async (id) => {
+    const query = `
+        select id, nombres, apellidos, email, rol, google_id
+        from usuarios
+        where id = $1;
+        `;
+
+    const values = [id];
+    const result = await pool.query(query, values);
+    return result.rows[0];
+};
+
 module.exports = {
     obtenerUsuarioPorEmail,
     crearUsuario,
     obtenerUsuarioPorGoogleId,
-    crearUsuariosPorGoogleId
+    crearUsuariosPorGoogleId,
+    obtenerUsuarioPorId
 };
