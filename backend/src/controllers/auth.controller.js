@@ -3,6 +3,7 @@ const authModel = require("../models/auth.model");
 const jwt = require("jsonwebtoken");
 const { OAuth2Client } = require("google-auth-library");
 const googleClient = new OAuth2Client(process.env.CLIENTE_ID);
+const crypto = require("crypto");
 
 
 const crearUsuario = async (req, res) => {
@@ -232,9 +233,59 @@ const obtenerPerfil = async (req, res) => {
     }
 };
 
+const forgotPassword = async (req, res) => {
+    try{
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({
+                message: "El email es obligatorio",
+            });
+        }
+
+        const emailNormalizado = email.trim().toLowerCase();
+
+        if (!emailNormalizado) {
+            return res.status(400).json({
+                message: "El email es obligatorio",
+            });
+        }
+
+        const usuario = await authModel.obtenerUsuarioPorEmail(emailNormalizado);
+
+        if (!usuario) {
+            return res.status(200).json({
+                message: "Si el correo existe, te enviaremos instrucciones para recuperar tu contrasena",
+            });
+        }
+
+        const tokenPlano = crypto.randomBytes(32).toString("hex");
+        const tokenHash = crypto.createHash("sha256").update(tokenPlano).digest("hex");
+
+        const expiraEn = new Date(Date.now() + 1000 * 60 * 30);
+
+        await authModel.guardarTokenRecuperacion({
+            usuarioId: usuario.id,
+            tokenHash,
+            expiraEn,
+        });
+
+        return res.status(200).json({
+            message:"Si el correo existe, te enviaremos instrucciones para recuperar tu contrasena",
+            resetToken: tokenPlano,
+        });
+    }catch(error) {
+        console.error("Error en forgot-password: ", error.message);
+        return res.status(500).json({
+            message: "Error interno del servidor",
+        });
+    }
+}
+
 module.exports = {
     crearUsuario,
     loginUsuario,
     loginGoogle,
-    obtenerPerfil
+    obtenerPerfil,
+    forgotPassword
 };

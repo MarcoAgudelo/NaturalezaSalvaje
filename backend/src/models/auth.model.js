@@ -62,10 +62,22 @@ const obtenerUsuarioPorId = async (id) => {
     return result.rows[0];
 };
 
+const guardarTokenRecuperacion = async ({usuarioId, tokenHash, expiraEn}) => {
+    const query = `
+        insert into password_reset_tokens (usuario_id, token_hash, expira_en)
+        values ($1, $2, $3)
+        returning id, usuario_id, expira_en, usado, creado_en;
+        `;
+    const values = [usuarioId, tokenHash, expiraEn];
+    const result = await pool.query(query, values);
+    return result.rows[0];  
+};
+
 module.exports = {
     obtenerUsuarioPorEmail,
     crearUsuario,
     obtenerUsuarioPorGoogleId,
     crearUsuariosPorGoogleId,
-    obtenerUsuarioPorId
+    obtenerUsuarioPorId,
+    guardarTokenRecuperacion
 };
