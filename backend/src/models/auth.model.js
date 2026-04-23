@@ -73,11 +73,53 @@ const guardarTokenRecuperacion = async ({usuarioId, tokenHash, expiraEn}) => {
     return result.rows[0];  
 };
 
+const obtenerTokenDeRecuperacionPorHash = async (tokenHash) => {
+    const query = `
+        select *
+        from password_reset_tokens
+        where token_hash = $1
+        limit 1;
+        `;
+
+    const values = [tokenHash];
+    const result = await pool.query(query, values);
+    return result.rows[0];
+};
+
+const actualizarPasswordUsuario = async (usuarioId, passwordHash) => {
+    const query = `
+        update usuarios
+        set password = $1
+        where id = $2
+        returning id, nombres, apellidos, email, rol;
+        `;
+
+    const values = [passwordHash, usuarioId];
+    const result = await pool.query(query, values);
+    return result.rows[0];
+};
+
+const marcarTokenComoUsado = async (tokenId) => {
+    const query = `
+        update password_reset_tokens
+        set usado = true
+        where id = $1
+        returning id, usado;
+        `;
+    
+    const values = [tokenId];
+    const result = await pool.query(query, values);
+    return result.rows[0];
+};
+
 module.exports = {
     obtenerUsuarioPorEmail,
     crearUsuario,
     obtenerUsuarioPorGoogleId,
     crearUsuariosPorGoogleId,
     obtenerUsuarioPorId,
-    guardarTokenRecuperacion
+    guardarTokenRecuperacion,
+    obtenerTokenDeRecuperacionPorHash,
+    actualizarPasswordUsuario,
+    marcarTokenComoUsado
 };

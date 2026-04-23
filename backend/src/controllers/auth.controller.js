@@ -280,12 +280,85 @@ const forgotPassword = async (req, res) => {
             message: "Error interno del servidor",
         });
     }
-}
+};
+
+const resetPassword = async (req,res) => {
+    try{
+        const {token, password} = req.body;
+
+        if (!token || !password) {
+            return res.status(400).json({
+                message: "El token y la contrasena son obligatorios",
+            });
+        }
+
+        const tokenLimpio = token.trim();
+        const passwordLimpia = password.trim();
+
+        if (!tokenLimpio || !passwordLimpia) {
+            return res.status(400).json({
+                message: "El token y la contrasena son obligatorios",
+            });
+        }
+
+        if (passwordLimpia.length < 6) {
+            return res.status(400).json({
+                message: "La contrasena debe tener al menos 6 caracteres",
+            });
+        }
+
+        const tokenHash = crypto.createHash("sha256").update(tokenLimpio).digest("hex");
+
+        const tokenGuardado = await authModel.obtenerTokenDeRecuperacionPorHash(tokenHash);
+
+        if (!tokenGuardado) {
+            return res.status(400).json({
+                message: "Token invalido o inexistente",
+            });
+        }
+
+        if (tokenGuardado.usado) {
+            return res.status(400).json({
+                message: "Este token ya fue utilizado",
+            });
+        }
+
+        const ahora = new Date();
+        const expiraEn = new Date(tokenGuardado.expira_en);
+
+        if (ahora > expiraEn) {
+            return res.status(400).json({
+                message: "El token ha expirado",
+            });
+        }
+
+        const nuevaPasswordHash = await bcrypt.hash(passwordLimpia, 10);
+
+        const usuarioActualizado = await authModel.actualizarPasswordUsuario(
+            tokenGuardado.usuario_id,
+            nuevaPasswordHash
+        );
+
+        await authModel.marcarTokenComoUsado(tokenGuardado.id);
+
+        return res.status(200).json({
+            message: "Contrasena actualizada correctamente",
+            user: usuarioActualizado,
+        });
+
+    }catch(error){
+        console.error("Error en reset-password: ", error.message);
+        return res.status(500).json({
+            message: "Error interno del servidor",
+        });
+    }
+};
 
 module.exports = {
     crearUsuario,
     loginUsuario,
     loginGoogle,
     obtenerPerfil,
-    forgotPassword
+    forgotPassword,
+    resetPassword
 };
